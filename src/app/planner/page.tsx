@@ -344,8 +344,8 @@ export default function PlannerPage() {
   };
 
   const startAnalysisAndGeneratePlan = async () => {
-    if (!currentUser?.id) {
-      toast({ title: "User not authenticated", variant: "destructive" });
+    if (!currentUser?.id || !currentUser.email || !currentUser.name) {
+      toast({ title: "User not authenticated", description: "Please log in to create a plan.", variant: "destructive" });
       return;
     }
     const validationResult = validateInputs();
@@ -381,14 +381,26 @@ export default function PlannerPage() {
             body: JSON.stringify({ userId: currentUser.id, planData: newPlanData }),
         });
 
-        if (!response.ok) {
+        if (response.ok) {
+            try {
+                await fetch('/api/send-plan-creation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: currentUser.email,
+                        name: currentUser.name,
+                        planDetails: newPlanData.planDetails
+                    }),
+                });
+            } catch (emailError) {
+                console.warn("Failed to dispatch plan creation email:", emailError);
+            }
+            toast({ title: "Study Plan Generated!", description: "Your new study plan is ready.", variant: "default", action: <CheckCircle className="text-green-500"/> });
+            await fetchUserPlans();
+        } else {
             const errorData = await response.json();
             throw new Error(errorData.error || `Failed to create plan: ${response.statusText}`);
         }
-        
-        toast({ title: "Study Plan Generated!", description: "Your new study plan is ready.", variant: "default", action: <CheckCircle className="text-green-500"/> });
-        await fetchUserPlans(); 
-
       } else {
         throw new Error("AI did not return a schedule.");
       }
@@ -529,7 +541,7 @@ export default function PlannerPage() {
   };
 
   const handleMarkPlanAsCompleted = async () => {
-    if (activePlan && currentUser?.id) {
+    if (activePlan && currentUser?.id && currentUser.email && currentUser.name) {
       const now = new Date().toISOString();
       const completedPlan: ScheduleData = {
         ...activePlan,
@@ -540,6 +552,19 @@ export default function PlannerPage() {
       setActivePlan(completedPlan); 
       const success = await saveActivePlanChanges(completedPlan);
       if (success) {
+        try {
+            await fetch('/api/send-plan-completion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: currentUser.email,
+                    name: currentUser.name,
+                    planDetails: completedPlan.planDetails,
+                }),
+            });
+        } catch (emailError) {
+            console.warn("Failed to dispatch plan completion email:", emailError);
+        }
         toast({ title: "Plan Marked as Completed!", description: "Congratulations!", variant: "default" });
       } else {
         fetchUserPlans(); 
