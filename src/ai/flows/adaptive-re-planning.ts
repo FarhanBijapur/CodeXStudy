@@ -12,17 +12,12 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+// A simplified schema for efficiency. Only sends necessary data to the AI.
 const TaskSchema = z.object({
   id: z.string(),
   date: z.string(),
   task: z.string(),
   completed: z.boolean(),
-  youtubeSearchQuery: z.string().optional(),
-  referenceSearchQuery: z.string().optional(),
-  subTasks: z.array(z.any()).optional(),
-  quizScore: z.number().optional(),
-  quizAttempted: z.boolean().optional(),
-  notes: z.string().optional(),
 });
 
 const AdaptiveRePlanningInputSchema = z.object({

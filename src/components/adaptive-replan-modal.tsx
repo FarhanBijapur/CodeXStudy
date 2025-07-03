@@ -93,7 +93,7 @@ export function AdaptiveReplanModal({
         return;
       }
 
-      // **FIX:** Simplify the task data sent to the AI to reduce prompt complexity and prevent overload.
+      // Simplify the task data sent to the AI to reduce prompt complexity and cost.
       const simplifiedTasks = tasks.map((task) => ({
         id: task.id,
         date: task.date,
