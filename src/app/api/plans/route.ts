@@ -41,8 +41,8 @@ export async function POST(req: Request) {
 
     // Insert into study_plans table
     await db.run(
-      `INSERT INTO study_plans (id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO study_plans (id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate, lastReminderSentDate)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       typedPlanData.id,
       userId,
       typedPlanData.createdAt,
@@ -54,7 +54,8 @@ export async function POST(req: Request) {
       typedPlanData.planDetails.subjectDetails,
       typedPlanData.planDetails.startDate,
       typedPlanData.status,
-      typedPlanData.completionDate
+      typedPlanData.completionDate,
+      null // lastReminderSentDate is null on creation
     );
 
     // Insert tasks into schedule_tasks table
@@ -122,7 +123,7 @@ export async function GET(req: Request) {
 
   try {
     const plansFromDb = await db.all(
-      `SELECT id, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate 
+      `SELECT id, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate, lastReminderSentDate 
        FROM study_plans 
        WHERE userId = ? 
        ORDER BY updatedAt DESC`, 
@@ -190,6 +191,7 @@ export async function GET(req: Request) {
         tasks: processedTasks,
         status: planRow.status as ScheduleData['status'],
         completionDate: planRow.completionDate,
+        lastReminderSentDate: planRow.lastReminderSentDate,
       };
       plans.push(plan);
     }

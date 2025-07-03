@@ -59,6 +59,7 @@ export async function getDb(): Promise<Database> {
       startDate TEXT,
       status TEXT NOT NULL DEFAULT 'active', -- 'active', 'completed', 'archived'
       completionDate TEXT,
+      lastReminderSentDate TEXT, -- Date reminder was last sent
       FOREIGN KEY (userId) REFERENCES users (id) ON DELETE CASCADE
     );
 
@@ -97,11 +98,22 @@ export async function getDb(): Promise<Database> {
     }
   } catch (migrationError) {
     console.error("Error during 'notes' column migration for 'schedule_tasks':", migrationError);
-    // Depending on the severity, you might want to throw this error or handle it.
-    // For now, we'll log it and proceed. The app might still face issues if the column is critical.
+  }
+
+  // Schema migration check for 'lastReminderSentDate' column in 'study_plans'
+   try {
+    const studyPlansInfo = await db.all("PRAGMA table_info(study_plans);");
+    const reminderColumnExists = studyPlansInfo.some(col => col.name === 'lastReminderSentDate');
+
+    if (!reminderColumnExists) {
+      console.log("Attempting to add 'lastReminderSentDate' column to 'study_plans' table.");
+      await db.exec("ALTER TABLE study_plans ADD COLUMN lastReminderSentDate TEXT;");
+      console.log("'lastReminderSentDate' column added successfully to 'study_plans'.");
+    }
+  } catch (migrationError) {
+    console.error("Error during 'lastReminderSentDate' column migration for 'study_plans':", migrationError);
   }
   
   dbInstance = db;
   return db;
 }
-

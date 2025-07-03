@@ -168,6 +168,17 @@ export default function DashboardPage() {
     return () => window.removeEventListener('studyPlanUpdated', handleStudyPlanUpdate);
   }, [reloadDataFromApi]);
 
+ useEffect(() => {
+    if (activeStudyPlan && activeStudyPlan.status === 'active' && currentUser) {
+      // Fire-and-forget the check for a missed day reminder
+      fetch('/api/reminders/send-missed-day', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id, planId: activeStudyPlan.id }),
+      }).catch(err => console.error("Failed to trigger missed day reminder check:", err));
+    }
+  }, [activeStudyPlan, currentUser]);
+
  const fetchPlanReflection = useCallback(async (planToReflect: ScheduleData, tasksToReflect: ScheduleTask[]) => {
       if (!planToReflect.planDetails || !tasksToReflect || tasksToReflect.length === 0) {
           return;
@@ -567,7 +578,3 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
-
-    
-
-    

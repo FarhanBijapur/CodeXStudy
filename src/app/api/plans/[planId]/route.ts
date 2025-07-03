@@ -19,7 +19,7 @@ const db = await getDb();
 
 export async function GET(
   req: Request,
-  { params }: { params: { planId: string } }
+  { params }: { params: { params: { planId: string } } }
 ) {
   const planId = params.planId;
   const { searchParams } = new URL(req.url);
@@ -34,7 +34,7 @@ export async function GET(
 
   try {
     const planRow = await db.get(
-      `SELECT id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate
+      `SELECT id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate, lastReminderSentDate
        FROM study_plans
        WHERE id = ? AND userId = ?`, // Ensure userId is part of the query for security
       planId, userId 
@@ -82,6 +82,7 @@ export async function GET(
       tasks: processedTasks,
       status: planRow.status as ScheduleData['status'],
       completionDate: planRow.completionDate,
+      lastReminderSentDate: planRow.lastReminderSentDate,
     };
 
     return NextResponse.json(plan, { status: 200 });
@@ -130,7 +131,7 @@ export async function PUT(
     await db.run(
       `UPDATE study_plans SET
          updatedAt = ?, scheduleString = ?, subjects = ?, dailyStudyHours = ?, studyDurationDays = ?,
-         subjectDetails = ?, startDate = ?, status = ?, completionDate = ?
+         subjectDetails = ?, startDate = ?, status = ?, completionDate = ?, lastReminderSentDate = ?
        WHERE id = ? AND userId = ?`,
       newUpdatedAt,
       typedPlanData.scheduleString,
@@ -141,6 +142,7 @@ export async function PUT(
       typedPlanData.planDetails.startDate,
       typedPlanData.status,
       typedPlanData.completionDate,
+      typedPlanData.lastReminderSentDate, // Include lastReminderSentDate in update
       planId,
       userId
     );
@@ -189,7 +191,7 @@ export async function PUT(
     
     // Fetch the fully updated plan to return it to the client
     const updatedPlanRow = await db.get(
-      `SELECT id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate
+      `SELECT id, userId, createdAt, updatedAt, scheduleString, subjects, dailyStudyHours, studyDurationDays, subjectDetails, startDate, status, completionDate, lastReminderSentDate
        FROM study_plans WHERE id = ? AND userId = ?`, planId, userId
     );
      if (!updatedPlanRow) { 
@@ -231,6 +233,7 @@ export async function PUT(
         tasks: processedUpdatedTasks,
         status: updatedPlanRow.status as ScheduleData['status'],
         completionDate: updatedPlanRow.completionDate,
+        lastReminderSentDate: updatedPlanRow.lastReminderSentDate,
     };
 
     return NextResponse.json(returnPlan, { status: 200 });

@@ -43,6 +43,7 @@ export interface ScheduleData {
   planDetails: PlanInput;
   status: 'active' | 'completed' | 'archived'; // More refined status
   completionDate?: string; // ISO string
+  lastReminderSentDate?: string; // ISO date string
   // Optional: add fields for plan overview stats if needed from your HTML
   daysToGoal?: number;
   successProbability?: number;
