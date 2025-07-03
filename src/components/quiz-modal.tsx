@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { MouseEvent } from 'react';
@@ -340,4 +339,3 @@ export function QuizModal({ task, subjectContext, isOpen, onClose, onQuizComplet
     </Dialog>
   );
 }
-
